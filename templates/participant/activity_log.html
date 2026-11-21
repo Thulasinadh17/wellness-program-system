@@ -1,0 +1,143 @@
+{% extends 'base.html' %}
+
+{% block title %}Daily Activity Log - Wellness Hub{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <!-- Header -->
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+    <div>
+      <h2 class="fw-bold mb-1"><i class="bi bi-calendar-check text-teal me-2"></i>Daily Activity & Habit Tracker</h2>
+      <p class="text-muted small mb-0">Record your daily biometrics and healthy choices. Earn +10 wellness points per log!</p>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <!-- Log Entry Form -->
+    <div class="col-lg-4">
+      <div class="card-wellness p-4">
+        <h5 class="fw-bold mb-3"><i class="bi bi-pencil-square text-teal me-2"></i>Log Today's Biometrics</h5>
+
+        <form method="post">
+          {% csrf_token %}
+
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Date</label>
+            {{ form.log_date }}
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label small fw-semibold"><i class="bi bi-person-walking text-success me-1"></i> Daily Steps</label>
+            {{ form.steps }}
+            {% if form.steps.errors %}<div class="text-danger small">{{ form.steps.errors }}</div>{% endif %}
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label small fw-semibold"><i class="bi bi-stopwatch text-warning me-1"></i> Workout / Exercise (Minutes)</label>
+            {{ form.workout_minutes }}
+            {% if form.workout_minutes.errors %}<div class="text-danger small">{{ form.workout_minutes.errors }}</div>{% endif %}
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label small fw-semibold"><i class="bi bi-droplet-fill text-primary me-1"></i> Water Intake (ml)</label>
+            {{ form.water_intake_ml }}
+            <div class="form-text small">e.g., 2000 ml = 2.0 Liters</div>
+            {% if form.water_intake_ml.errors %}<div class="text-danger small">{{ form.water_intake_ml.errors }}</div>{% endif %}
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label small fw-semibold"><i class="bi bi-moon-stars text-info me-1"></i> Sleep Duration (Hours)</label>
+            {{ form.sleep_hours }}
+            {% if form.sleep_hours.errors %}<div class="text-danger small">{{ form.sleep_hours.errors }}</div>{% endif %}
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label small fw-semibold"><i class="bi bi-egg-fried text-muted me-1"></i> Meals & Nutrition Notes</label>
+            {{ form.meals_notes }}
+          </div>
+
+          <button type="submit" class="btn btn-teal w-100 py-2">
+            <i class="bi bi-check-lg me-1"></i> Save Activity (+10 pts)
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- History Table -->
+    <div class="col-lg-8">
+      <div class="card-wellness p-4">
+        <h5 class="fw-bold mb-3"><i class="bi bi-clock-history text-teal me-2"></i>My Activity History</h5>
+
+        {% if page_obj %}
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+              <thead class="table-light">
+                <tr class="small text-muted">
+                  <th>Date</th>
+                  <th>Steps</th>
+                  <th>Workout</th>
+                  <th>Water</th>
+                  <th>Sleep</th>
+                  <th>Notes</th>
+                  <th class="text-end">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for log in page_obj %}
+                  <tr>
+                    <td class="fw-semibold text-nowrap">{{ log.log_date|date:"M d, Y" }}</td>
+                    <td>
+                      <span class="badge bg-success-subtle text-success">
+                        {{ log.steps }}
+                      </span>
+                    </td>
+                    <td>{{ log.workout_minutes }} mins</td>
+                    <td>{{ log.water_intake_ml }} ml</td>
+                    <td>{{ log.sleep_hours }} hrs</td>
+                    <td class="small text-muted" style="max-width: 200px;">
+                      {{ log.meals_notes|truncatewords:6|default:'&mdash;' }}
+                    </td>
+                    <td class="text-end">
+                      <form method="post" action="{% url 'delete_activity_log' log.id %}" onsubmit="return confirm('Delete this log entry?');" class="d-inline">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-sm btn-outline-danger p-1" title="Delete Log">
+                          <i class="bi bi-trash"></i>
+                        </button>
+                      </form>
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Pagination -->
+          {% if page_obj.has_other_pages %}
+            <nav class="mt-4" aria-label="Activity logs pagination">
+              <ul class="pagination pagination-sm justify-content-center mb-0">
+                {% if page_obj.has_previous %}
+                  <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a></li>
+                {% endif %}
+                {% for num in page_obj.paginator.page_range %}
+                  <li class="page-item {% if page_obj.number == num %}active{% endif %}">
+                    <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                  </li>
+                {% endfor %}
+                {% if page_obj.has_next %}
+                  <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a></li>
+                {% endif %}
+              </ul>
+            </nav>
+          {% endif %}
+        {% else %}
+          <div class="empty-state py-5">
+            <i class="bi bi-calendar-plus text-muted fs-1"></i>
+            <h6>No activity logged yet</h6>
+            <p class="small text-muted">Use the form on the left to log your first wellness activity today!</p>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

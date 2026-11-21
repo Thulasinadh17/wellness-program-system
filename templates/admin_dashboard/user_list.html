@@ -1,0 +1,128 @@
+{% extends 'base.html' %}
+
+{% block title %}Manage Users - Wellness Admin{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <!-- Header -->
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+    <div>
+      <h2 class="fw-bold mb-1"><i class="bi bi-people-fill text-teal me-2"></i>User & Role Management</h2>
+      <p class="text-muted small mb-0">Manage coordinators, health professionals, HR analysts, and participants.</p>
+    </div>
+    <a href="{% url 'admin_user_create' %}" class="btn btn-teal">
+      <i class="bi bi-person-plus-fill me-1"></i> Create New User
+    </a>
+  </div>
+
+  <!-- Search & Role Filter -->
+  <div class="card-wellness p-3 mb-4">
+    <form method="get" class="row g-2 align-items-center">
+      <div class="col-md-7">
+        <div class="input-group">
+          <span class="input-group-text bg-light"><i class="bi bi-search"></i></span>
+          <input type="text" name="q" value="{{ query }}" class="form-control" placeholder="Search by username, name, email, department...">
+        </div>
+      </div>
+      <div class="col-md-3">
+        <select name="role" class="form-select">
+          <option value="">All Roles</option>
+          {% for r_val, r_label in roles %}
+            <option value="{{ r_val }}" {% if role_filter == r_val %}selected{% endif %}>{{ r_label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-2 d-flex gap-1">
+        <button type="submit" class="btn btn-teal w-100">Filter</button>
+        {% if query or role_filter %}
+          <a href="{% url 'admin_user_list' %}" class="btn btn-outline-secondary"><i class="bi bi-x-lg"></i></a>
+        {% endif %}
+      </div>
+    </form>
+  </div>
+
+  <!-- Users Table -->
+  <div class="card-wellness p-4">
+    {% if page_obj %}
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr class="small text-muted">
+              <th>Username</th>
+              <th>Full Name</th>
+              <th>Email</th>
+              <th>Role</th>
+              <th>Department</th>
+              <th>Points</th>
+              <th>Status</th>
+              <th class="text-end">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for u in page_obj %}
+              <tr>
+                <td class="fw-bold">{{ u.username }}</td>
+                <td>{{ u.get_full_name|default:'&mdash;' }}</td>
+                <td class="small">{{ u.email|default:'&mdash;' }}</td>
+                <td>
+                  <span class="badge bg-{{ u.role_badge_color }}">
+                    {{ u.get_role_display }}
+                  </span>
+                </td>
+                <td>{{ u.department|default:'&mdash;' }}</td>
+                <td>{{ u.points }}</td>
+                <td>
+                  {% if u.is_active %}
+                    <span class="badge bg-success-subtle text-success">Active</span>
+                  {% else %}
+                    <span class="badge bg-danger-subtle text-danger">Inactive</span>
+                  {% endif %}
+                </td>
+                <td class="text-end">
+                  <div class="btn-group">
+                    <a href="{% url 'admin_user_edit' u.id %}" class="btn btn-sm btn-outline-secondary" title="Edit User">
+                      <i class="bi bi-pencil"></i>
+                    </a>
+                    {% if u != user %}
+                      <form method="post" action="{% url 'admin_user_toggle' u.id %}" class="d-inline" onsubmit="return confirm('Change active status for {{ u.username }}?');">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-sm {% if u.is_active %}btn-outline-warning text-dark{% else %}btn-outline-success{% endif %}" title="Toggle Active">
+                          <i class="bi {% if u.is_active %}bi-person-slash{% else %}bi-person-check{% endif %}"></i>
+                        </button>
+                      </form>
+                    {% endif %}
+                  </div>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      {% if page_obj.has_other_pages %}
+        <nav class="mt-4" aria-label="Users pagination">
+          <ul class="pagination pagination-sm justify-content-center mb-0">
+            {% if page_obj.has_previous %}
+              <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if query %}&q={{ query }}{% endif %}{% if role_filter %}&role={{ role_filter }}{% endif %}">Previous</a></li>
+            {% endif %}
+            {% for num in page_obj.paginator.page_range %}
+              <li class="page-item {% if page_obj.number == num %}active{% endif %}">
+                <a class="page-link" href="?page={{ num }}{% if query %}&q={{ query }}{% endif %}{% if role_filter %}&role={{ role_filter }}{% endif %}">{{ num }}</a>
+              </li>
+            {% endfor %}
+            {% if page_obj.has_next %}
+              <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}{% if query %}&q={{ query }}{% endif %}{% if role_filter %}&role={{ role_filter }}{% endif %}">Next</a></li>
+            {% endif %}
+          </ul>
+        </nav>
+      {% endif %}
+    {% else %}
+      <div class="empty-state py-4">
+        <i class="bi bi-people text-muted fs-2"></i>
+        <h6>No users found</h6>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

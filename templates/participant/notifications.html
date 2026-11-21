@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+
+{% block title %}Notifications Inbox - Wellness Hub{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+    <div>
+      <h2 class="fw-bold mb-1"><i class="bi bi-bell-fill text-teal me-2"></i>Notifications Inbox</h2>
+      <p class="text-muted small mb-0">Announcements, session alerts, milestone recognitions, and reward confirmations.</p>
+    </div>
+    {% if page_obj %}
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="mark_all_read" value="1">
+        <button type="submit" class="btn btn-sm btn-outline-secondary">
+          <i class="bi bi-check-all me-1"></i> Mark All as Read
+        </button>
+      </form>
+    {% endif %}
+  </div>
+
+  <div class="card-wellness p-4">
+    {% if page_obj %}
+      <div class="list-group list-group-flush">
+        {% for note in page_obj %}
+          <div class="list-group-item px-0 py-3 border-bottom {% if not note.is_read %}bg-light-subtle{% endif %}">
+            <div class="d-flex justify-content-between align-items-start">
+              <div>
+                <div class="d-flex align-items-center gap-2 mb-1">
+                  {% if not note.is_read %}
+                    <span class="badge bg-teal" style="background-color: var(--primary-teal); width: 8px; height: 8px; padding: 0; border-radius: 50%;"></span>
+                  {% endif %}
+                  <span class="badge {% if note.notification_type == 'REWARD' %}bg-success{% elif note.notification_type == 'ANNOUNCEMENT' %}bg-primary{% elif note.notification_type == 'GOAL_ACHIEVED' %}bg-warning text-dark{% else %}bg-secondary{% endif %}">
+                    {{ note.get_notification_type_display }}
+                  </span>
+                  <span class="fw-bold">{{ note.title }}</span>
+                </div>
+                <p class="small text-muted mb-1">{{ note.message }}</p>
+                <small class="text-muted">{{ note.created_at|timesince }} ago &bull; {{ note.created_at|date:"M d, Y H:i" }}</small>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+
+      <!-- Pagination -->
+      {% if page_obj.has_other_pages %}
+        <nav class="mt-4" aria-label="Notifications pagination">
+          <ul class="pagination pagination-sm justify-content-center mb-0">
+            {% if page_obj.has_previous %}
+              <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a></li>
+            {% endif %}
+            {% for num in page_obj.paginator.page_range %}
+              <li class="page-item {% if page_obj.number == num %}active{% endif %}"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+            {% endfor %}
+            {% if page_obj.has_next %}
+              <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a></li>
+            {% endif %}
+          </ul>
+        </nav>
+      {% endif %}
+    {% else %}
+      <div class="empty-state py-5">
+        <i class="bi bi-bell-slash text-muted fs-1"></i>
+        <h6>Inbox is all caught up</h6>
+        <p class="small text-muted">You will receive announcements and reminders here as programs progress.</p>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

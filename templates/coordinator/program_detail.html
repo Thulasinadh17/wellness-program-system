@@ -1,0 +1,205 @@
+{% extends 'base.html' %}
+
+{% block title %}Manage: {{ program.title }} - Wellness Hub{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <!-- Back link -->
+  <div class="mb-3">
+    <a href="{% url 'coordinator_dashboard' %}" class="text-teal text-decoration-none small">
+      <i class="bi bi-arrow-left me-1"></i> Back to Coordinator Portal
+    </a>
+  </div>
+
+  <!-- Program Header Card -->
+  <div class="card-wellness p-4 mb-4 border-top border-4 border-teal">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start gap-3">
+      <div>
+        <div class="d-flex flex-wrap gap-2 mb-2">
+          <span class="badge bg-light text-dark border">
+            <i class="bi {{ program.category.icon }} text-teal me-1"></i> {{ program.category.name }}
+          </span>
+          <span class="badge {% if program.status == 'ACTIVE' %}bg-success{% elif program.status == 'UPCOMING' %}bg-primary{% elif program.status == 'COMPLETED' %}bg-secondary{% else %}bg-danger{% endif %}">
+            {{ program.get_status_display }}
+          </span>
+          <span class="badge bg-light text-dark border">
+            Capacity: {{ program.enrolled_count }} / {{ program.capacity }} enrolled
+          </span>
+        </div>
+        <h2 class="fw-bold mb-2">{{ program.title }}</h2>
+        <p class="text-muted small mb-0">
+          <i class="bi bi-calendar3 me-1"></i> {{ program.start_date|date:"F d, Y" }} &mdash; {{ program.end_date|date:"F d, Y" }}
+          {% if program.assigned_professional %}
+            &bull; <i class="bi bi-person-workspace text-teal me-1"></i> Specialist: {{ program.assigned_professional.get_full_name|default:program.assigned_professional.username }}
+          {% endif %}
+        </p>
+      </div>
+
+      <div class="d-flex gap-2">
+        <a href="{% url 'coordinator_program_edit' program.id %}" class="btn btn-outline-secondary btn-sm">
+          <i class="bi bi-pencil me-1"></i> Edit Details
+        </a>
+        {% if program.status != 'CANCELLED' %}
+          <form method="post" action="{% url 'coordinator_program_cancel' program.id %}" onsubmit="return confirm('Cancel this program? Enrolled participants will be notified.');">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-outline-danger btn-sm">
+              <i class="bi bi-x-circle me-1"></i> Cancel Program
+            </button>
+          </form>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Row: Sessions and Broadcast Announcements -->
+  <div class="row g-4 mb-4">
+    <!-- Sessions List -->
+    <div class="col-lg-7">
+      <div class="card-wellness p-4 h-100">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h5 class="fw-bold mb-0"><i class="bi bi-clock-history text-teal me-2"></i>Sessions ({{ sessions.count }})</h5>
+          <a href="{% url 'coordinator_session_create' program.id %}" class="btn btn-sm btn-teal">
+            <i class="bi bi-plus-lg me-1"></i> Schedule Session
+          </a>
+        </div>
+
+        {% if sessions %}
+          <div class="list-group list-group-flush">
+            {% for sess in sessions %}
+              <div class="list-group-item px-0 py-3 border-bottom">
+                <div class="d-flex justify-content-between align-items-start">
+                  <div>
+                    <h6 class="fw-bold mb-1">{{ sess.title }}</h6>
+                    <div class="small text-muted mb-2">
+                      <span class="me-3"><i class="bi bi-calendar-event me-1"></i> {{ sess.session_date|date:"M d, Y" }}</span>
+                      <span class="me-3"><i class="bi bi-clock me-1"></i> {{ sess.start_time|time:"H:i" }} &ndash; {{ sess.end_time|time:"H:i" }}</span>
+                      <span><i class="bi bi-geo-alt me-1 text-teal"></i> {{ sess.location }}</span>
+                    </div>
+                    {% if sess.is_completed %}
+                      <span class="badge bg-success-subtle text-success border border-success-subtle">
+                        <i class="bi bi-check2"></i> Completed ({{ sess.attended_count }} attended)
+                      </span>
+                    {% else %}
+                      <span class="badge bg-secondary">Upcoming</span>
+                    {% endif %}
+                  </div>
+
+                  <div class="d-flex flex-column gap-1">
+                    <a href="{% url 'coordinator_mark_attendance' program.id sess.id %}" class="btn btn-sm btn-outline-success">
+                      <i class="bi bi-check2-square me-1"></i> Mark Attendance
+                    </a>
+                    <a href="{% url 'coordinator_session_edit' program.id sess.id %}" class="btn btn-sm btn-outline-secondary">
+                      <i class="bi bi-pencil me-1"></i> Edit
+                    </a>
+                  </div>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="empty-state py-4">
+            <i class="bi bi-calendar-plus text-muted fs-2"></i>
+            <h6>No sessions scheduled yet</h6>
+            <p class="small text-muted">Click the button above to schedule your first cohort session.</p>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Broadcast Announcement Card -->
+    <div class="col-lg-5">
+      <div class="card-wellness p-4 h-100">
+        <h5 class="fw-bold mb-2"><i class="bi bi-megaphone-fill text-warning me-2"></i>Broadcast Announcement</h5>
+        <p class="small text-muted mb-3">Send notifications instantly to all {{ program.enrolled_count }} enrolled participants.</p>
+
+        <form method="post" action="{% url 'coordinator_send_announcement' program.id %}">
+          {% csrf_token %}
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Subject / Title</label>
+            {{ announcement_form.title }}
+          </div>
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Message</label>
+            {{ announcement_form.message }}
+          </div>
+          <button type="submit" class="btn btn-teal w-100 py-2">
+            <i class="bi bi-send me-1"></i> Send Announcement
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Enrolled Participants Table -->
+  <div class="card-wellness p-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h5 class="fw-bold mb-0"><i class="bi bi-people-fill text-teal me-2"></i>Enrolled Participants ({{ enrollments.count }})</h5>
+      <span class="badge bg-light text-muted border">Capacity: {{ program.capacity }}</span>
+    </div>
+
+    {% if enrollments %}
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr class="small text-muted">
+              <th>Participant</th>
+              <th>Department</th>
+              <th>Enrolled Date</th>
+              <th>Attendance</th>
+              <th>Participation %</th>
+              <th>Reward Status</th>
+              <th class="text-end">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for enr in enrollments %}
+              <tr>
+                <td>
+                  <div class="fw-bold">{{ enr.user.get_full_name|default:enr.user.username }}</div>
+                  <div class="small text-muted">@{{ enr.user.username }}</div>
+                </td>
+                <td>{{ enr.user.department|default:'&mdash;' }}</td>
+                <td class="small">{{ enr.enrolled_at|date:"M d, Y" }}</td>
+                <td>
+                  <span class="fw-semibold">{{ enr.attended_sessions_count }} / {{ enr.conducted_sessions_count }}</span>
+                </td>
+                <td>
+                  <span class="fw-bold {% if enr.participation_rate >= 75 %}text-success{% else %}text-muted{% endif %}">
+                    {{ enr.participation_rate }}%
+                  </span>
+                </td>
+                <td>
+                  {% if enr.is_eligible_for_reward %}
+                    <span class="badge badge-reward-eligible">
+                      <i class="bi bi-trophy-fill me-1"></i> Eligible for Reward
+                    </span>
+                  {% else %}
+                    <span class="badge bg-secondary">In Progress (&lt; 75%)</span>
+                  {% endif %}
+                </td>
+                <td class="text-end">
+                  {% if enr.status == 'ENROLLED' %}
+                    <form method="post" action="{% url 'coordinator_remove_enrollment' program.id enr.id %}" onsubmit="return confirm('Remove participant from this program?');" class="d-inline">
+                      {% csrf_token %}
+                      <button type="submit" class="btn btn-sm btn-outline-danger" title="Remove participant">
+                        <i class="bi bi-person-x"></i> Remove
+                      </button>
+                    </form>
+                  {% else %}
+                    <span class="badge bg-light text-muted">{{ enr.get_status_display }}</span>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="empty-state py-4">
+        <i class="bi bi-person-x text-muted fs-2"></i>
+        <p class="small text-muted mb-0">No participants have enrolled in this program yet.</p>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

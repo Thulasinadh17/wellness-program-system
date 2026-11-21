@@ -1,0 +1,160 @@
+{% extends 'base.html' %}
+
+{% block title %}Wellness Program Management System - Live Hub{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <!-- Hero Section -->
+  <div class="hero-banner mb-5 shadow">
+    <div class="row align-items-center">
+      <div class="col-lg-8">
+        <span class="badge bg-warning text-dark mb-2 px-3 py-2 fw-semibold">
+          <i class="bi bi-award-fill me-1"></i> Software Engineering Capstone Project
+        </span>
+        <h1 class="display-5 fw-bold mb-3">Empowering Organizational Wellness & Healthy Habits</h1>
+        <p class="lead mb-4 opacity-90">
+          A comprehensive wellness platform connecting coordinators, health professionals, participants, and HR management. Schedule fitness challenges, track daily biometrics, earn milestone rewards, and analyze aggregate outcomes.
+        </p>
+        <div class="d-flex flex-wrap gap-2">
+          <a href="{% url 'register' %}" class="btn btn-light btn-lg px-4 text-teal fw-bold">
+            <i class="bi bi-person-plus me-1"></i> Register as Participant
+          </a>
+          <a href="{% url 'login' %}" class="btn btn-outline-light btn-lg px-4">
+            <i class="bi bi-box-arrow-in-right me-1"></i> Sign In to Portal
+          </a>
+        </div>
+      </div>
+      <div class="col-lg-4 d-none d-lg-block text-center">
+        <i class="bi bi-heart-pulse text-white" style="font-size: 10rem; opacity: 0.85;"></i>
+      </div>
+    </div>
+  </div>
+
+  <!-- Demo Accounts Quick Reference Bar -->
+  <div class="card-wellness p-4 mb-5 border-start border-4 border-success">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+      <div>
+        <h5 class="fw-bold mb-1 text-success"><i class="bi bi-key-fill me-2"></i>Evaluator Demo Accounts</h5>
+        <p class="text-muted small mb-0">Use password <code>Demo@1234</code> for all accounts below, or click any button to auto-fill:</p>
+      </div>
+      <div class="d-flex flex-wrap gap-2">
+        <a href="{% url 'login' %}?role=admin_demo" class="btn btn-sm btn-outline-danger">
+          <i class="bi bi-shield-lock me-1"></i> Admin (admin_demo)
+        </a>
+        <a href="{% url 'login' %}?role=coord_demo" class="btn btn-sm btn-outline-success">
+          <i class="bi bi-kanban me-1"></i> Coordinator (coord_demo)
+        </a>
+        <a href="{% url 'login' %}?role=pro_demo" class="btn btn-sm btn-outline-info">
+          <i class="bi bi-person-workspace me-1"></i> Professional (pro_demo)
+        </a>
+        <a href="{% url 'login' %}?role=hr_demo" class="btn btn-sm btn-outline-warning text-dark">
+          <i class="bi bi-graph-up-arrow me-1"></i> HR/Mgmt (hr_demo)
+        </a>
+        <a href="{% url 'login' %}?role=user_demo" class="btn btn-sm btn-teal">
+          <i class="bi bi-person me-1"></i> Participant (user_demo)
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Featured Wellness Programs -->
+  <div class="mb-5">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <div>
+        <h3 class="fw-bold mb-0">Featured Wellness Programs</h3>
+        <p class="text-muted small">Explore active health initiatives, workshops, and fitness cohorts</p>
+      </div>
+      <a href="{% url 'program_browse' %}" class="btn btn-outline-secondary btn-sm">
+        View All <i class="bi bi-arrow-right"></i>
+      </a>
+    </div>
+
+    <div class="row g-4">
+      {% for program in featured_programs %}
+        <div class="col-md-6 col-lg-4">
+          <div class="card-wellness h-100 p-4 d-flex flex-column justify-content-between">
+            <div>
+              <div class="d-flex justify-content-between align-items-start mb-2">
+                <span class="badge bg-light text-dark border">
+                  <i class="bi {{ program.category.icon }} me-1 text-teal"></i> {{ program.category.name }}
+                </span>
+                <span class="badge {% if program.status == 'ACTIVE' %}bg-success{% elif program.status == 'UPCOMING' %}bg-primary{% else %}bg-secondary{% endif %}">
+                  {{ program.get_status_display }}
+                </span>
+              </div>
+              <h5 class="fw-bold mb-2">{{ program.title }}</h5>
+              <p class="text-muted small mb-3">{{ program.description|truncatewords:20 }}</p>
+            </div>
+
+            <div>
+              <div class="mb-3">
+                <div class="d-flex justify-content-between small text-muted mb-1">
+                  <span>Capacity: {{ program.enrolled_count }}/{{ program.capacity }} enrolled</span>
+                  <span>{{ program.available_spots }} spots left</span>
+                </div>
+                <div class="progress" style="height: 6px;">
+                  <div class="progress-bar bg-teal" role="progressbar" 
+                       style="width: {% widthratio program.enrolled_count program.capacity 100 %}%; background-color: var(--primary-teal);"></div>
+                </div>
+              </div>
+
+              <div class="d-flex justify-content-between align-items-center pt-2 border-top">
+                <small class="text-muted"><i class="bi bi-calendar3 me-1"></i> {{ program.start_date|date:"M d" }} - {{ program.end_date|date:"M d, Y" }}</small>
+                <a href="{% url 'program_detail' program.id %}" class="btn btn-sm btn-outline-teal text-teal border-teal">Details</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      {% empty %}
+        <div class="col-12">
+          <div class="empty-state">
+            <i class="bi bi-calendar2-x"></i>
+            <h5>No programs available right now</h5>
+            <p>Check back soon or sign in as coordinator to publish cohorts.</p>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Key Architectural Pillars -->
+  <div class="row g-4 py-4 text-center">
+    <div class="col-md-3">
+      <div class="card-wellness p-4 h-100">
+        <div class="stat-icon-box bg-light text-teal mx-auto mb-3" style="color: var(--primary-teal);">
+          <i class="bi bi-shield-check"></i>
+        </div>
+        <h5 class="fw-bold">Role-Based Access</h5>
+        <p class="text-muted small">5 dedicated user roles with isolated workflows and 403 access guards.</p>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card-wellness p-4 h-100">
+        <div class="stat-icon-box bg-light text-success mx-auto mb-3">
+          <i class="bi bi-trophy-fill"></i>
+        </div>
+        <h5 class="fw-bold">75% Reward Rule</h5>
+        <p class="text-muted small">Automated attendance verification for badge eligibility and points.</p>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card-wellness p-4 h-100">
+        <div class="stat-icon-box bg-light text-info mx-auto mb-3">
+          <i class="bi bi-graph-up"></i>
+        </div>
+        <h5 class="fw-bold">Daily Biometrics</h5>
+        <p class="text-muted small">Participants log hydration, steps, sleep, and workouts with Chart.js analytics.</p>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card-wellness p-4 h-100">
+        <div class="stat-icon-box bg-light text-warning mx-auto mb-3">
+          <i class="bi bi-lock-fill"></i>
+        </div>
+        <h5 class="fw-bold">HR Privacy Protection</h5>
+        <p class="text-muted small">Strict aggregate reporting preventing HR from viewing individual health notes.</p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,227 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ program.title }} - Wellness Hub{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <!-- Back Button & Breadcrumb -->
+  <div class="mb-3">
+    <a href="{% url 'program_browse' %}" class="text-teal text-decoration-none small">
+      <i class="bi bi-arrow-left me-1"></i> Back to all programs
+    </a>
+  </div>
+
+  <!-- Program Hero Header -->
+  <div class="card-wellness p-4 mb-4 border-top border-4 border-teal">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start gap-3">
+      <div>
+        <div class="d-flex flex-wrap gap-2 mb-2">
+          <span class="badge bg-light text-dark border">
+            <i class="bi {{ program.category.icon }} me-1 text-teal"></i> {{ program.category.name }}
+          </span>
+          <span class="badge {% if program.status == 'ACTIVE' %}bg-success{% elif program.status == 'UPCOMING' %}bg-primary{% elif program.status == 'COMPLETED' %}bg-secondary{% else %}bg-danger{% endif %}">
+            {{ program.get_status_display }}
+          </span>
+          {% if is_enrolled %}
+            <span class="badge bg-success-subtle text-success border border-success-subtle">
+              <i class="bi bi-check-circle-fill me-1"></i> Enrolled
+            </span>
+            {% if user_enrollment.is_eligible_for_reward %}
+              <span class="badge badge-reward-eligible">
+                <i class="bi bi-trophy-fill me-1"></i> Reward Eligible ({{ user_enrollment.participation_rate }}%)
+              </span>
+            {% endif %}
+          {% endif %}
+        </div>
+        <h2 class="fw-bold mb-2">{{ program.title }}</h2>
+        <div class="text-muted small d-flex flex-wrap gap-3">
+          <span><i class="bi bi-calendar3 me-1"></i> {{ program.start_date|date:"F d, Y" }} &mdash; {{ program.end_date|date:"F d, Y" }}</span>
+          <span><i class="bi bi-people me-1"></i> Capacity: <strong>{{ program.enrolled_count }} / {{ program.capacity }}</strong> enrolled</span>
+          {% if program.average_rating %}
+            <span><i class="bi bi-star-fill text-warning me-1"></i> {{ program.average_rating }} / 5.0 ({{ feedbacks.count }} reviews)</span>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Action Enrollment Buttons -->
+      <div class="d-flex flex-column align-items-md-end gap-2">
+        {% if is_enrolled %}
+          <div class="text-end">
+            <span class="badge bg-success p-2 mb-2 d-inline-block">
+              <i class="bi bi-check-circle me-1"></i> You are enrolled
+            </span>
+            <form method="post" action="{% url 'program_withdraw' program.id %}" onsubmit="return confirm('Are you sure you want to withdraw from this program?');">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-sm btn-outline-danger">
+                <i class="bi bi-box-arrow-left me-1"></i> Withdraw from Program
+              </button>
+            </form>
+          </div>
+        {% elif program.status in 'COMPLETED CANCELLED' %}
+          <button class="btn btn-secondary" disabled>Enrollment Closed</button>
+        {% elif program.is_full %}
+          <button class="btn btn-outline-danger" disabled>
+            <i class="bi bi-exclamation-octagon me-1"></i> Program at Full Capacity
+          </button>
+        {% else %}
+          <form method="post" action="{% url 'program_enroll' program.id %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-teal btn-lg px-4 shadow-sm">
+              <i class="bi bi-plus-circle me-1"></i> Enroll in Program
+            </button>
+          </form>
+        {% endif %}
+      </div>
+    </div>
+
+    <hr class="my-3">
+
+    <!-- Description & Leads -->
+    <div class="row g-3">
+      <div class="col-lg-8">
+        <h6 class="fw-bold text-teal">About This Wellness Initiative</h6>
+        <p class="text-dark">{{ program.description }}</p>
+      </div>
+      <div class="col-lg-4 bg-light rounded-3 p-3">
+        <h6 class="fw-bold small mb-2 text-muted text-uppercase">Program Leadership</h6>
+        <div class="mb-2">
+          <small class="text-muted d-block">Coordinator:</small>
+          <strong>{{ program.coordinator.get_full_name|default:program.coordinator.username }}</strong>
+          <div class="small text-muted">{{ program.coordinator.department|default:'Wellness Operations' }}</div>
+        </div>
+        {% if program.assigned_professional %}
+          <div>
+            <small class="text-muted d-block">Assigned Health Professional:</small>
+            <strong>{{ program.assigned_professional.get_full_name|default:program.assigned_professional.username }}</strong>
+            <div class="small text-teal">{{ program.assigned_professional.professional_title|default:'Specialist' }}</div>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <!-- Left Column: Sessions Schedule -->
+    <div class="col-lg-7">
+      <div class="card-wellness p-4 mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h5 class="fw-bold mb-0"><i class="bi bi-calendar2-range text-teal me-2"></i>Sessions Schedule</h5>
+          <span class="badge bg-light text-muted border">{{ sessions.count }} sessions total</span>
+        </div>
+
+        {% if sessions %}
+          <div class="list-group list-group-flush">
+            {% for session in sessions %}
+              <div class="list-group-item px-0 py-3 border-bottom">
+                <div class="d-flex justify-content-between align-items-start">
+                  <div>
+                    <h6 class="fw-bold mb-1">{{ session.title }}</h6>
+                    <p class="text-muted small mb-2">{{ session.description }}</p>
+                    <div class="small text-muted">
+                      <span class="me-3"><i class="bi bi-calendar-event me-1"></i> {{ session.session_date|date:"l, M d, Y" }}</span>
+                      <span class="me-3"><i class="bi bi-clock me-1"></i> {{ session.start_time|time:"H:i" }} &ndash; {{ session.end_time|time:"H:i" }}</span>
+                      <span><i class="bi bi-geo-alt me-1 text-teal"></i> {{ session.location }}</span>
+                    </div>
+                  </div>
+                  <div>
+                    {% if session.is_completed %}
+                      <span class="badge bg-secondary">Conducted</span>
+                    {% else %}
+                      <span class="badge bg-primary">Scheduled</span>
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="empty-state py-4">
+            <i class="bi bi-calendar-x fs-2"></i>
+            <p class="small text-muted mb-0">No sessions have been scheduled for this program yet.</p>
+          </div>
+        {% endif %}
+      </div>
+
+      <!-- Professional Notes & Recommendations -->
+      {% if progress_notes %}
+        <div class="card-wellness p-4">
+          <h5 class="fw-bold mb-3"><i class="bi bi-chat-heart text-info me-2"></i>Professional Advice & Notes</h5>
+          <div class="list-group list-group-flush">
+            {% for note in progress_notes %}
+              <div class="list-group-item px-0 py-3 border-bottom">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                  <span class="badge bg-info-subtle text-info-emphasis border border-info-subtle">{{ note.get_note_type_display }}</span>
+                  <small class="text-muted">{{ note.created_at|date:"M d, Y" }}</small>
+                </div>
+                <h6 class="fw-bold mb-1">{{ note.title }}</h6>
+                <p class="small text-muted mb-1">{{ note.content }}</p>
+                <small class="text-teal">&mdash; Dr./Coach {{ note.professional.get_full_name|default:note.professional.username }}</small>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- Right Column: Participant Feedback & Reviews -->
+    <div class="col-lg-5">
+      <!-- Submit Feedback Card (Only if Enrolled) -->
+      {% if is_enrolled %}
+        <div class="card-wellness p-4 mb-4 bg-light border-0">
+          <h5 class="fw-bold mb-2"><i class="bi bi-pencil-square text-teal me-2"></i>Rate This Program</h5>
+          <p class="small text-muted mb-3">Share your feedback to help coordinators refine wellness workshops.</p>
+          
+          <form method="post" action="{% url 'submit_feedback' program.id %}">
+            {% csrf_token %}
+            <div class="mb-3">
+              <label class="form-label small fw-semibold">Your Rating</label>
+              {{ feedback_form.rating }}
+            </div>
+            <div class="mb-3">
+              <label class="form-label small fw-semibold">Your Comments / Experience</label>
+              {{ feedback_form.comments }}
+            </div>
+            <button type="submit" class="btn btn-teal btn-sm w-100">
+              <i class="bi bi-send me-1"></i> Submit Feedback
+            </button>
+          </form>
+        </div>
+      {% endif %}
+
+      <!-- Reviews List -->
+      <div class="card-wellness p-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h5 class="fw-bold mb-0"><i class="bi bi-star-fill text-warning me-2"></i>Reviews ({{ feedbacks.count }})</h5>
+          {% if program.average_rating %}
+            <span class="badge bg-warning text-dark fw-bold">{{ program.average_rating }} / 5.0</span>
+          {% endif %}
+        </div>
+
+        {% if feedbacks %}
+          <div class="list-group list-group-flush">
+            {% for fb in feedbacks %}
+              <div class="list-group-item px-0 py-2 border-bottom">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                  <span class="small fw-semibold">{{ fb.participant.first_name|default:fb.participant.username }}</span>
+                  <span class="text-warning small">
+                    {% for i in "12345"|make_list %}
+                      {% if forloop.counter <= fb.rating %}★{% else %}☆{% endif %}
+                    {% endfor %}
+                  </span>
+                </div>
+                <p class="small text-muted mb-0">{{ fb.comments }}</p>
+                <small class="text-muted" style="font-size: 0.75rem;">{{ fb.submitted_at|date:"M d, Y" }}</small>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="empty-state py-4">
+            <i class="bi bi-chat-square-quote fs-3 text-muted"></i>
+            <p class="small text-muted mb-0">No reviews submitted yet. Be the first to share your experience!</p>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

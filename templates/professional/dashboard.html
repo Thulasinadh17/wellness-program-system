@@ -1,0 +1,146 @@
+{% extends 'base.html' %}
+
+{% block title %}Wellness Professional Portal - Wellness Hub{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <!-- Header -->
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+    <div>
+      <h2 class="fw-bold mb-1"><i class="bi bi-person-workspace text-info me-2"></i>Wellness Professional Portal</h2>
+      <p class="text-muted small mb-0">Review assigned cohorts, consult participant progress, and publish clinical recommendations.</p>
+    </div>
+    <div>
+      <span class="badge bg-info-subtle text-info-emphasis border border-info-subtle p-2">
+        <i class="bi bi-patch-check-fill me-1"></i> {{ user.professional_title|default:'Certified Health Specialist' }}
+      </span>
+    </div>
+  </div>
+
+  <!-- KPI Cards -->
+  <div class="row g-3 mb-4">
+    <div class="col-md-4">
+      <div class="card-wellness p-3 h-100">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <div class="text-muted small fw-semibold">Assigned Cohorts</div>
+            <div class="fs-3 fw-bold text-info">{{ total_assigned_programs }}</div>
+          </div>
+          <div class="stat-icon-box bg-info-subtle text-info">
+            <i class="bi bi-journal-medical"></i>
+          </div>
+        </div>
+        <div class="small text-muted mt-2">Active programs under your guidance</div>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="card-wellness p-3 h-100">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <div class="text-muted small fw-semibold">Active Participants</div>
+            <div class="fs-3 fw-bold text-primary">{{ total_participants }}</div>
+          </div>
+          <div class="stat-icon-box bg-primary-subtle text-primary">
+            <i class="bi bi-people"></i>
+          </div>
+        </div>
+        <div class="small text-muted mt-2">Participants enrolled in your programs</div>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="card-wellness p-3 h-100">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <div class="text-muted small fw-semibold">Published Notes</div>
+            <div class="fs-3 fw-bold text-success">{{ recent_notes.count }}</div>
+          </div>
+          <div class="stat-icon-box bg-success-subtle text-success">
+            <i class="bi bi-chat-heart"></i>
+          </div>
+        </div>
+        <div class="small text-muted mt-2">Clinical notes & recommendations</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <!-- Assigned Programs List -->
+    <div class="col-lg-7">
+      <div class="card-wellness p-4 h-100">
+        <h5 class="fw-bold mb-3"><i class="bi bi-folder-check text-teal me-2"></i>Assigned Wellness Programs</h5>
+
+        {% if assigned_programs %}
+          <div class="list-group list-group-flush">
+            {% for prog in assigned_programs %}
+              <div class="list-group-item px-0 py-3 border-bottom">
+                <div class="d-flex justify-content-between align-items-start">
+                  <div>
+                    <div class="d-flex align-items-center gap-2 mb-1">
+                      <span class="badge bg-light text-dark border">{{ prog.category.name }}</span>
+                      <span class="badge {% if prog.status == 'ACTIVE' %}bg-success{% else %}bg-secondary{% endif %}">{{ prog.get_status_display }}</span>
+                    </div>
+                    <h6 class="fw-bold mb-1">{{ prog.title }}</h6>
+                    <p class="small text-muted mb-2">{{ prog.description|truncatewords:16 }}</p>
+                    <div class="small text-muted">
+                      <span><i class="bi bi-people me-1"></i> {{ prog.enrolled_count }} participants</span> &bull;
+                      <span><i class="bi bi-calendar3 me-1"></i> {{ prog.start_date|date:"M d" }} &ndash; {{ prog.end_date|date:"M d, Y" }}</span>
+                    </div>
+                  </div>
+                  <div class="text-end">
+                    <a href="{% url 'professional_program_detail' prog.id %}" class="btn btn-sm btn-teal">
+                      View & Record Notes <i class="bi bi-arrow-right"></i>
+                    </a>
+                  </div>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="empty-state py-4">
+            <i class="bi bi-folder-x text-muted fs-2"></i>
+            <h6>No programs assigned to your profile</h6>
+            <p class="small text-muted">A wellness coordinator will assign cohorts to you soon.</p>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Recent Progress Notes Feed -->
+    <div class="col-lg-5">
+      <div class="card-wellness p-4 h-100">
+        <h5 class="fw-bold mb-3"><i class="bi bi-card-checklist text-info me-2"></i>Recent Notes & Advice</h5>
+
+        {% if recent_notes %}
+          <div class="list-group list-group-flush">
+            {% for note in recent_notes %}
+              <div class="list-group-item px-0 py-2 border-bottom">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                  <span class="badge bg-info-subtle text-info-emphasis border border-info-subtle small">{{ note.get_note_type_display }}</span>
+                  <small class="text-muted">{{ note.created_at|date:"M d" }}</small>
+                </div>
+                <div class="fw-semibold small">{{ note.title }}</div>
+                <p class="small text-muted mb-1">{{ note.content|truncatewords:14 }}</p>
+                <div class="small text-teal">
+                  <i class="bi bi-arrow-return-right me-1"></i>
+                  {% if note.participant %}
+                    For: {{ note.participant.get_full_name|default:note.participant.username }}
+                  {% else %}
+                    For: All Participants in {{ note.program.title|truncatewords:3 }}
+                  {% endif %}
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="empty-state py-4">
+            <i class="bi bi-card-text text-muted fs-2"></i>
+            <p class="small text-muted mb-0">No progress notes recorded yet.</p>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

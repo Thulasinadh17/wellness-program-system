@@ -1,0 +1,161 @@
+{% extends 'base.html' %}
+
+{% block title %}System Administration - Wellness Hub{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <!-- Header -->
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+    <div>
+      <h2 class="fw-bold mb-1"><i class="bi bi-shield-shaded text-danger me-2"></i>System Administration Portal</h2>
+      <p class="text-muted small mb-0">Manage platform users, roles, program categories, and supervise system health.</p>
+    </div>
+    <div class="d-flex flex-wrap gap-2">
+      <a href="{% url 'admin_user_create' %}" class="btn btn-teal">
+        <i class="bi bi-person-plus me-1"></i> Create User
+      </a>
+      <a href="{% url 'admin_category_create' %}" class="btn btn-outline-teal text-teal border-teal">
+        <i class="bi bi-tag me-1"></i> Add Category
+      </a>
+      <a href="/admin/" target="_blank" class="btn btn-outline-secondary">
+        <i class="bi bi-sliders me-1"></i> Open Django Admin <i class="bi bi-box-arrow-up-right small"></i>
+      </a>
+    </div>
+  </div>
+
+  <!-- Role Count Summary -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-lg">
+      <div class="card-wellness p-3 h-100">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <div class="text-muted small fw-semibold">Total Users</div>
+            <div class="fs-4 fw-bold">{{ total_users }}</div>
+          </div>
+          <div class="stat-icon-box bg-light text-dark"><i class="bi bi-people"></i></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-6 col-lg">
+      <div class="card-wellness p-3 h-100 border-start border-3 border-primary">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <div class="text-muted small fw-semibold">Participants</div>
+            <div class="fs-4 fw-bold text-primary">{{ users_by_role.participants }}</div>
+          </div>
+          <div class="stat-icon-box bg-primary-subtle text-primary"><i class="bi bi-person"></i></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-6 col-lg">
+      <div class="card-wellness p-3 h-100 border-start border-3 border-success">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <div class="text-muted small fw-semibold">Coordinators</div>
+            <div class="fs-4 fw-bold text-success">{{ users_by_role.coordinators }}</div>
+          </div>
+          <div class="stat-icon-box bg-success-subtle text-success"><i class="bi bi-kanban"></i></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-6 col-lg">
+      <div class="card-wellness p-3 h-100 border-start border-3 border-info">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <div class="text-muted small fw-semibold">Professionals</div>
+            <div class="fs-4 fw-bold text-info">{{ users_by_role.professionals }}</div>
+          </div>
+          <div class="stat-icon-box bg-info-subtle text-info"><i class="bi bi-person-workspace"></i></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-6 col-lg">
+      <div class="card-wellness p-3 h-100 border-start border-3 border-warning">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <div class="text-muted small fw-semibold">HR / Mgmt</div>
+            <div class="fs-4 fw-bold text-warning">{{ users_by_role.hr }}</div>
+          </div>
+          <div class="stat-icon-box bg-warning-subtle text-warning"><i class="bi bi-graph-up-arrow"></i></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-6 col-lg">
+      <div class="card-wellness p-3 h-100 border-start border-3 border-danger">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <div class="text-muted small fw-semibold">Admins</div>
+            <div class="fs-4 fw-bold text-danger">{{ users_by_role.admins }}</div>
+          </div>
+          <div class="stat-icon-box bg-danger-subtle text-danger"><i class="bi bi-shield-lock"></i></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <!-- Recent System Activity / Enrollments -->
+    <div class="col-lg-6">
+      <div class="card-wellness p-4 h-100">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h5 class="fw-bold mb-0"><i class="bi bi-activity text-teal me-2"></i>Recent Enrollments</h5>
+          <span class="badge bg-light text-muted border">Live stream</span>
+        </div>
+
+        {% if recent_enrollments %}
+          <div class="list-group list-group-flush">
+            {% for enr in recent_enrollments %}
+              <div class="list-group-item px-0 py-2 border-bottom d-flex justify-content-between align-items-center">
+                <div>
+                  <span class="fw-semibold small d-block">{{ enr.user.get_full_name|default:enr.user.username }}</span>
+                  <span class="text-muted small">enrolled in <strong>{{ enr.program.title|truncatewords:4 }}</strong></span>
+                </div>
+                <div class="text-end">
+                  <span class="badge bg-light text-muted small">{{ enr.enrolled_at|timesince }} ago</span>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="text-muted small mb-0">No recent enrollments recorded.</p>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Recently Registered Users -->
+    <div class="col-lg-6">
+      <div class="card-wellness p-4 h-100">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h5 class="fw-bold mb-0"><i class="bi bi-person-lines-fill text-primary me-2"></i>Recently Added Users</h5>
+          <a href="{% url 'admin_user_list' %}" class="small text-teal text-decoration-none">View All</a>
+        </div>
+
+        {% if recent_users %}
+          <div class="list-group list-group-flush">
+            {% for u in recent_users %}
+              <div class="list-group-item px-0 py-2 border-bottom d-flex justify-content-between align-items-center">
+                <div>
+                  <span class="fw-semibold small d-block">{{ u.get_full_name|default:u.username }} (@{{ u.username }})</span>
+                  <span class="badge bg-light text-muted border" style="font-size: 0.75rem;">{{ u.get_role_display }}</span>
+                </div>
+                <div class="text-end">
+                  <a href="{% url 'admin_user_edit' u.id %}" class="btn btn-sm btn-outline-secondary p-1" title="Edit User">
+                    <i class="bi bi-pencil"></i>
+                  </a>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="text-muted small mb-0">No users found.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

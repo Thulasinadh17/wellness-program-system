@@ -1,0 +1,115 @@
+{% extends 'base.html' %}
+
+{% block title %}Mark Attendance: {{ session.title }} - Wellness Hub{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="mb-3">
+    <a href="{% url 'coordinator_program_detail' program.id %}" class="text-teal text-decoration-none small">
+      <i class="bi bi-arrow-left me-1"></i> Back to {{ program.title }}
+    </a>
+  </div>
+
+  <div class="card-wellness p-4 mb-4 border-top border-4 border-success">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start gap-3">
+      <div>
+        <span class="badge bg-light text-dark border mb-2">{{ program.title }}</span>
+        <h3 class="fw-bold mb-1"><i class="bi bi-check2-square text-success me-2"></i>Record Attendance: {{ session.title }}</h3>
+        <p class="text-muted small mb-0">
+          <i class="bi bi-calendar-event me-1"></i> {{ session.session_date|date:"l, F d, Y" }} &bull;
+          <i class="bi bi-clock me-1"></i> {{ session.start_time|time:"H:i" }} &ndash; {{ session.end_time|time:"H:i" }} &bull;
+          <i class="bi bi-geo-alt me-1 text-teal"></i> {{ session.location }}
+        </p>
+      </div>
+      <div>
+        <span class="badge bg-warning text-dark p-2">
+          <i class="bi bi-info-circle me-1"></i> Rule: &ge; 75% Participation = Reward Eligible
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card-wellness p-4">
+    <form method="post">
+      {% csrf_token %}
+
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="fw-bold mb-0">Enrolled Participants ({{ rows|length }})</h5>
+        <button type="button" class="btn btn-sm btn-outline-secondary" id="toggleAllBtn">
+          Select All / Deselect All
+        </button>
+      </div>
+
+      {% if rows %}
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-4">
+            <thead class="table-light">
+              <tr class="small text-muted">
+                <th style="width: 50px;">Attended</th>
+                <th>Participant</th>
+                <th>Department</th>
+                <th>Current Rate</th>
+                <th>Notes / Participation Remark</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in rows %}
+                <tr>
+                  <td>
+                    <div class="form-check form-switch fs-5">
+                      <input class="form-check-input attendance-checkbox" type="checkbox" name="attended_enrollments" value="{{ row.enrollment.id }}" id="att_{{ row.enrollment.id }}" {% if row.attended %}checked{% endif %}>
+                    </div>
+                  </td>
+                  <td>
+                    <label class="form-check-label fw-bold d-block" for="att_{{ row.enrollment.id }}">
+                      {{ row.enrollment.user.get_full_name|default:row.enrollment.user.username }}
+                    </label>
+                    <span class="small text-muted">@{{ row.enrollment.user.username }}</span>
+                  </td>
+                  <td>{{ row.enrollment.user.department|default:'&mdash;' }}</td>
+                  <td>
+                    <span class="fw-semibold {% if row.enrollment.participation_rate >= 75 %}text-success{% else %}text-muted{% endif %}">
+                      {{ row.enrollment.participation_rate }}%
+                    </span>
+                    {% if row.enrollment.is_eligible_for_reward %}
+                      <span class="badge badge-reward-eligible ms-1"><i class="bi bi-trophy-fill"></i></span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    <input type="text" name="notes_{{ row.enrollment.id }}" value="{{ row.notes }}" class="form-control form-control-sm" placeholder="Optional notes (e.g., active questions, excused...)">
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        <div class="d-flex justify-content-between pt-3 border-top">
+          <a href="{% url 'coordinator_program_detail' program.id %}" class="btn btn-outline-secondary">Cancel</a>
+          <button type="submit" class="btn btn-success px-4 py-2 fw-semibold">
+            <i class="bi bi-check-all me-1"></i> Save Attendance & Complete Session
+          </button>
+        </div>
+      {% else %}
+        <div class="empty-state py-4">
+          <i class="bi bi-people text-muted fs-2"></i>
+          <p class="small text-muted mb-0">No participants are currently enrolled in this program to mark attendance for.</p>
+        </div>
+      {% endif %}
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  const toggleBtn = document.getElementById('toggleAllBtn');
+  if (toggleBtn) {
+    toggleBtn.addEventListener('click', function() {
+      const checkboxes = document.querySelectorAll('.attendance-checkbox');
+      const anyUnchecked = Array.from(checkboxes).some(cb => !cb.checked);
+      checkboxes.forEach(cb => cb.checked = anyUnchecked);
+    });
+  }
+</script>
+{% endblock %}

@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+
+{% block title %}Participant Registration - Wellness Hub{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+      <div class="card-wellness p-4 p-sm-5 shadow-sm">
+        <div class="text-center mb-4">
+          <div class="stat-icon-box bg-light text-teal mx-auto mb-2" style="color: var(--primary-teal);">
+            <i class="bi bi-person-plus-fill"></i>
+          </div>
+          <h3 class="fw-bold mb-1">Create Participant Account</h3>
+          <p class="text-muted small">Join wellness challenges, log healthy habits, and earn rewards</p>
+          <span class="badge bg-primary text-white">Role: Participant</span>
+        </div>
+
+        <form method="post" action="{% url 'register' %}">
+          {% csrf_token %}
+
+          {% if form.errors %}
+            <div class="alert alert-danger p-2 small mb-3">
+              Please correct the errors indicated below.
+            </div>
+          {% endif %}
+
+          <div class="row g-2 mb-3">
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">First Name *</label>
+              {{ form.first_name }}
+              {% if form.first_name.errors %}<div class="text-danger small">{{ form.first_name.errors }}</div>{% endif %}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">Last Name *</label>
+              {{ form.last_name }}
+              {% if form.last_name.errors %}<div class="text-danger small">{{ form.last_name.errors }}</div>{% endif %}
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Username *</label>
+            {{ form.username }}
+            {% if form.username.errors %}<div class="text-danger small">{{ form.username.errors }}</div>{% endif %}
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Email Address *</label>
+            {{ form.email }}
+            {% if form.email.errors %}<div class="text-danger small">{{ form.email.errors }}</div>{% endif %}
+          </div>
+
+          <div class="row g-2 mb-3">
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">Department / Faculty</label>
+              {{ form.department }}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">Phone Number</label>
+              {{ form.phone_number }}
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Password *</label>
+            <input type="password" name="password1" class="form-control" placeholder="Create a strong password" required id="id_password1">
+            {% if form.password1.errors %}<div class="text-danger small">{{ form.password1.errors }}</div>{% endif %}
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label small fw-semibold">Confirm Password *</label>
+            <input type="password" name="password2" class="form-control" placeholder="Re-enter password" required id="id_password2">
+            {% if form.password2.errors %}<div class="text-danger small">{{ form.password2.errors }}</div>{% endif %}
+          </div>
+
+          <button type="submit" class="btn btn-teal w-100 py-2 fw-semibold mb-3">
+            <i class="bi bi-check-circle me-1"></i> Register as Participant
+          </button>
+        </form>
+
+        <div class="text-center small text-muted">
+          Already registered? <a href="{% url 'login' %}" class="text-teal fw-semibold">Sign in here</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

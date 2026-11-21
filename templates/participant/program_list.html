@@ -1,0 +1,151 @@
+{% extends 'base.html' %}
+
+{% block title %}Explore Wellness Programs - Wellness Hub{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <!-- Header -->
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+    <div>
+      <h2 class="fw-bold mb-1"><i class="bi bi-grid-fill text-teal me-2"></i>Explore Wellness Programs</h2>
+      <p class="text-muted small mb-0">Discover challenges, mindfulness cohorts, health screenings, and fitness groups.</p>
+    </div>
+  </div>
+
+  <!-- Search & Filter Card -->
+  <div class="card-wellness p-3 mb-4">
+    <form method="get" class="row g-2 align-items-center">
+      <div class="col-md-5">
+        <div class="input-group">
+          <span class="input-group-text bg-light"><i class="bi bi-search"></i></span>
+          <input type="text" name="q" value="{{ query }}" class="form-control" placeholder="Search by title, topic, or keyword...">
+        </div>
+      </div>
+      <div class="col-md-3">
+        <select name="category" class="form-select">
+          <option value="">All Categories</option>
+          {% for cat in categories %}
+            <option value="{{ cat.id }}" {% if selected_category == cat.id|stringformat:"s" %}selected{% endif %}>
+              {{ cat.name }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-2">
+        <select name="status" class="form-select">
+          <option value="">All Statuses</option>
+          <option value="ACTIVE" {% if selected_status == 'ACTIVE' %}selected{% endif %}>Active</option>
+          <option value="UPCOMING" {% if selected_status == 'UPCOMING' %}selected{% endif %}>Upcoming</option>
+          <option value="COMPLETED" {% if selected_status == 'COMPLETED' %}selected{% endif %}>Completed</option>
+        </select>
+      </div>
+      <div class="col-md-2 d-flex gap-1">
+        <button type="submit" class="btn btn-teal w-100">Filter</button>
+        {% if query or selected_category or selected_status %}
+          <a href="{% url 'program_browse' %}" class="btn btn-outline-secondary"><i class="bi bi-x-lg"></i></a>
+        {% endif %}
+      </div>
+    </form>
+  </div>
+
+  <!-- Programs Grid -->
+  <div class="row g-4 mb-4">
+    {% for program in page_obj %}
+      <div class="col-md-6 col-lg-4">
+        <div class="card-wellness h-100 p-4 d-flex flex-column justify-content-between">
+          <div>
+            <!-- Badges -->
+            <div class="d-flex justify-content-between align-items-start mb-2">
+              <span class="badge bg-light text-dark border">
+                <i class="bi {{ program.category.icon }} me-1 text-teal"></i> {{ program.category.name }}
+              </span>
+              <span class="badge {% if program.status == 'ACTIVE' %}bg-success{% elif program.status == 'UPCOMING' %}bg-primary{% elif program.status == 'COMPLETED' %}bg-secondary{% else %}bg-danger{% endif %}">
+                {{ program.get_status_display }}
+              </span>
+            </div>
+
+            <h5 class="fw-bold mb-2">{{ program.title }}</h5>
+            <p class="text-muted small mb-3">{{ program.description|truncatewords:24 }}</p>
+
+            <div class="mb-3 small">
+              <div class="text-muted mb-1"><i class="bi bi-person-badge me-1"></i> Coordinator: <strong>{{ program.coordinator.get_full_name|default:program.coordinator.username }}</strong></div>
+              {% if program.assigned_professional %}
+                <div class="text-muted"><i class="bi bi-person-workspace me-1 text-teal"></i> Specialist: {{ program.assigned_professional.get_full_name|default:program.assigned_professional.username }}</div>
+              {% endif %}
+            </div>
+          </div>
+
+          <div>
+            <!-- Capacity bar -->
+            <div class="mb-3">
+              <div class="d-flex justify-content-between small text-muted mb-1">
+                <span>Enrolled: {{ program.enrolled_count }}/{{ program.capacity }}</span>
+                <span>
+                  {% if program.is_full %}
+                    <span class="text-danger fw-semibold">Full</span>
+                  {% else %}
+                    {{ program.available_spots }} spots left
+                  {% endif %}
+                </span>
+              </div>
+              <div class="progress" style="height: 6px;">
+                <div class="progress-bar {% if program.is_full %}bg-danger{% else %}bg-teal{% endif %}" role="progressbar" 
+                     style="width: {% widthratio program.enrolled_count program.capacity 100 %}%; background-color: {% if not program.is_full %}var(--primary-teal){% endif %};"></div>
+              </div>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center pt-2 border-top">
+              <small class="text-muted"><i class="bi bi-calendar3 me-1"></i> {{ program.start_date|date:"M d" }} - {{ program.end_date|date:"M d, Y" }}</small>
+              
+              <div class="d-flex align-items-center gap-2">
+                {% if program.id in user_enrolled_program_ids %}
+                  <span class="badge bg-success-subtle text-success border border-success-subtle">
+                    <i class="bi bi-check2"></i> Enrolled
+                  </span>
+                {% elif program.is_full %}
+                  <span class="badge bg-secondary">Full</span>
+                {% endif %}
+                <a href="{% url 'program_detail' program.id %}" class="btn btn-sm btn-teal">
+                  View
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    {% empty %}
+      <div class="col-12">
+        <div class="empty-state card-wellness p-5">
+          <i class="bi bi-search"></i>
+          <h5>No programs found matching your filters</h5>
+          <p class="small">Try resetting your search query or selecting a different category.</p>
+          <a href="{% url 'program_browse' %}" class="btn btn-outline-teal btn-sm">Reset Filters</a>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+
+  <!-- Pagination -->
+  {% if page_obj.has_other_pages %}
+    <nav aria-label="Programs pagination">
+      <ul class="pagination justify-content-center">
+        {% if page_obj.has_previous %}
+          <li class="page-item">
+            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if query %}&q={{ query }}{% endif %}{% if selected_category %}&category={{ selected_category }}{% endif %}{% if selected_status %}&status={{ selected_status }}{% endif %}">Previous</a>
+          </li>
+        {% endif %}
+        {% for num in page_obj.paginator.page_range %}
+          <li class="page-item {% if page_obj.number == num %}active{% endif %}">
+            <a class="page-link" href="?page={{ num }}{% if query %}&q={{ query }}{% endif %}{% if selected_category %}&category={{ selected_category }}{% endif %}{% if selected_status %}&status={{ selected_status }}{% endif %}">{{ num }}</a>
+          </li>
+        {% endfor %}
+        {% if page_obj.has_next %}
+          <li class="page-item">
+            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if query %}&q={{ query }}{% endif %}{% if selected_category %}&category={{ selected_category }}{% endif %}{% if selected_status %}&status={{ selected_status }}{% endif %}">Next</a>
+          </li>
+        {% endif %}
+      </ul>
+    </nav>
+  {% endif %}
+</div>
+{% endblock %}

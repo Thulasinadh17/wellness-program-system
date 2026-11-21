@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }} - Wellness Admin{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="mb-3">
+    <a href="{% url 'admin_category_list' %}" class="text-teal text-decoration-none small">
+      <i class="bi bi-arrow-left me-1"></i> Back to Categories
+    </a>
+  </div>
+
+  <div class="row justify-content-center">
+    <div class="col-lg-6">
+      <div class="card-wellness p-4 p-md-5">
+        <h3 class="fw-bold mb-1"><i class="bi bi-tag-fill text-teal me-2"></i>{{ title }}</h3>
+        <p class="text-muted small mb-4">Define category label, description, and visual theme icon.</p>
+
+        <form method="post">
+          {% csrf_token %}
+
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Category Name *</label>
+            {{ form.name }}
+            {% if form.name.errors %}<div class="text-danger small">{{ form.name.errors }}</div>{% endif %}
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Description</label>
+            {{ form.description }}
+          </div>
+
+          <div class="row g-2 mb-4">
+            <div class="col-6">
+              <label class="form-label small fw-semibold">Bootstrap Icon Class</label>
+              {{ form.icon }}
+              <div class="form-text small">e.g., bi-activity, bi-apple, bi-flower1</div>
+            </div>
+            <div class="col-6">
+              <label class="form-label small fw-semibold">Color Accent</label>
+              {{ form.color }}
+            </div>
+          </div>
+
+          <div class="d-flex justify-content-between pt-3 border-top">
+            <a href="{% url 'admin_category_list' %}" class="btn btn-outline-secondary">Cancel</a>
+            <button type="submit" class="btn btn-teal px-4">
+              <i class="bi bi-check-circle me-1"></i> Save Category
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

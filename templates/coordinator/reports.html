@@ -1,0 +1,121 @@
+{% extends 'base.html' %}
+
+{% block title %}Participation Reports - Wellness Hub{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <!-- Header -->
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+    <div>
+      <h2 class="fw-bold mb-1"><i class="bi bi-file-earmark-bar-graph text-teal me-2"></i>Participation & Outcome Reports</h2>
+      <p class="text-muted small mb-0">Aggregate attendance performance, reward milestone tracking, and raw data export.</p>
+    </div>
+    <div>
+      <a href="{% url 'coordinator_export_csv' %}" class="btn btn-success">
+        <i class="bi bi-download me-1"></i> Export Reports to CSV
+      </a>
+    </div>
+  </div>
+
+  <!-- Reports Table -->
+  <div class="card-wellness p-4 mb-4">
+    <h5 class="fw-bold mb-3">Program Cohort Performance Summary</h5>
+
+    {% if reports %}
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr class="small text-muted">
+              <th>Program</th>
+              <th>Category</th>
+              <th>Enrolled</th>
+              <th>Conducted Sessions</th>
+              <th>Overall Attendance %</th>
+              <th>Reward Eligible Count</th>
+              <th class="text-end">Details</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for rep in reports %}
+              <tr>
+                <td>
+                  <a href="{% url 'coordinator_program_detail' rep.program.id %}" class="fw-bold text-dark text-decoration-none">
+                    {{ rep.program.title }}
+                  </a>
+                </td>
+                <td>
+                  <span class="badge bg-light text-dark border">
+                    <i class="bi {{ rep.program.category.icon }} text-teal me-1"></i> {{ rep.program.category.name }}
+                  </span>
+                </td>
+                <td>{{ rep.enrolled_count }}</td>
+                <td>{{ rep.conducted_sessions }}</td>
+                <td>
+                  <span class="fw-bold {% if rep.overall_rate >= 75 %}text-success{% else %}text-dark{% endif %}">
+                    {{ rep.overall_rate }}%
+                  </span>
+                </td>
+                <td>
+                  <span class="badge bg-success-subtle text-success border border-success-subtle">
+                    {{ rep.reward_eligible_count }} participants (&ge; 75%)
+                  </span>
+                </td>
+                <td class="text-end">
+                  <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#rep_detail_{{ rep.program.id }}">
+                    Participants <i class="bi bi-chevron-down"></i>
+                  </button>
+                </td>
+              </tr>
+              <!-- Collapsible participant breakdown -->
+              <tr class="collapse" id="rep_detail_{{ rep.program.id }}">
+                <td colspan="7" class="p-3 bg-light">
+                  <div class="card card-body bg-white border">
+                    <h6 class="fw-bold small mb-2">Enrolled Participants Breakdown</h6>
+                    <div class="table-responsive">
+                      <table class="table table-sm table-borderless small mb-0">
+                        <thead class="border-bottom text-muted">
+                          <tr>
+                            <th>Participant</th>
+                            <th>Department</th>
+                            <th>Attended / Conducted</th>
+                            <th>Participation Rate</th>
+                            <th>Reward Status</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {% for enr in rep.enrollments %}
+                            <tr>
+                              <td>{{ enr.user.get_full_name|default:enr.user.username }} (@{{ enr.user.username }})</td>
+                              <td>{{ enr.user.department|default:'&mdash;' }}</td>
+                              <td>{{ enr.attended_sessions_count }} / {{ rep.conducted_sessions }}</td>
+                              <td class="fw-semibold">{{ enr.participation_rate }}%</td>
+                              <td>
+                                {% if enr.is_eligible_for_reward %}
+                                  <span class="badge badge-reward-eligible small"><i class="bi bi-trophy-fill me-1"></i> Eligible (&ge; 75%)</span>
+                                {% else %}
+                                  <span class="badge bg-secondary small">Below Threshold</span>
+                                {% endif %}
+                              </td>
+                            </tr>
+                          {% empty %}
+                            <tr><td colspan="5" class="text-muted">No enrolled participants.</td></tr>
+                          {% endfor %}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="empty-state py-4">
+        <i class="bi bi-file-earmark-x text-muted fs-2"></i>
+        <p class="small text-muted mb-0">No programs available to generate reports.</p>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

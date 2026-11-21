@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+
+{% block title %}Program Consultation: {{ program.title }} - Wellness Hub{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="mb-3">
+    <a href="{% url 'professional_dashboard' %}" class="text-teal text-decoration-none small">
+      <i class="bi bi-arrow-left me-1"></i> Back to Professional Portal
+    </a>
+  </div>
+
+  <!-- Program Header -->
+  <div class="card-wellness p-4 mb-4 border-top border-4 border-info">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start gap-3">
+      <div>
+        <div class="d-flex flex-wrap gap-2 mb-2">
+          <span class="badge bg-light text-dark border">{{ program.category.name }}</span>
+          <span class="badge {% if program.status == 'ACTIVE' %}bg-success{% else %}bg-secondary{% endif %}">{{ program.get_status_display }}</span>
+          <span class="badge bg-light text-dark border">{{ enrollments.count }} Enrolled Participants</span>
+        </div>
+        <h2 class="fw-bold mb-1">{{ program.title }}</h2>
+        <p class="text-muted small mb-0">{{ program.description }}</p>
+      </div>
+      <div>
+        <small class="text-muted d-block">Coordinator:</small>
+        <strong>{{ program.coordinator.get_full_name|default:program.coordinator.username }}</strong>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <!-- Record Progress Note Form -->
+    <div class="col-lg-5">
+      <div class="card-wellness p-4 mb-4">
+        <h5 class="fw-bold mb-3"><i class="bi bi-pencil-square text-info me-2"></i>Record Clinical / Wellness Note</h5>
+        <p class="small text-muted mb-3">Publish personalized advice or program-wide wellness guidelines.</p>
+
+        <form method="post">
+          {% csrf_token %}
+
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Target Participant</label>
+            {{ form.participant }}
+            <div class="form-text small">Leave as 'Entire Program' for all enrolled members.</div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Note Type</label>
+            {{ form.note_type }}
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Note Title *</label>
+            {{ form.title }}
+            {% if form.title.errors %}<div class="text-danger small">{{ form.title.errors }}</div>{% endif %}
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label small fw-semibold">Note Content / Recommendation *</label>
+            {{ form.content }}
+            {% if form.content.errors %}<div class="text-danger small">{{ form.content.errors }}</div>{% endif %}
+          </div>
+
+          <button type="submit" class="btn btn-teal w-100 py-2">
+            <i class="bi bi-save me-1"></i> Save & Publish Note
+          </button>
+        </form>
+      </div>
+
+      <!-- Enrolled Participants Roster -->
+      <div class="card-wellness p-4">
+        <h6 class="fw-bold mb-3"><i class="bi bi-people text-teal me-2"></i>Enrolled Participant Cohort</h6>
+        <div class="list-group list-group-flush" style="max-height: 250px; overflow-y: auto;">
+          {% for enr in enrollments %}
+            <div class="list-group-item px-0 py-2 border-bottom d-flex justify-content-between align-items-center">
+              <div>
+                <span class="fw-semibold small d-block">{{ enr.user.get_full_name|default:enr.user.username }}</span>
+                <span class="text-muted" style="font-size: 0.75rem;">{{ enr.user.department|default:'Participant' }}</span>
+              </div>
+              <span class="badge bg-light text-dark border small">{{ enr.participation_rate }}% att.</span>
+            </div>
+          {% empty %}
+            <div class="text-muted small py-2">No participants enrolled.</div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Existing Notes Log -->
+    <div class="col-lg-7">
+      <div class="card-wellness p-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h5 class="fw-bold mb-0"><i class="bi bi-journal-text text-teal me-2"></i>Recorded Notes Log ({{ notes.count }})</h5>
+        </div>
+
+        {% if notes %}
+          <div class="list-group list-group-flush">
+            {% for note in notes %}
+              <div class="list-group-item px-0 py-3 border-bottom">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <span class="badge bg-info-subtle text-info-emphasis border border-info-subtle">
+                    {{ note.get_note_type_display }}
+                  </span>
+                  <small class="text-muted">{{ note.created_at|date:"M d, Y H:i" }}</small>
+                </div>
+                <h6 class="fw-bold mb-1">{{ note.title }}</h6>
+                <p class="small text-muted mb-2">{{ note.content }}</p>
+                <div class="small text-teal">
+                  <i class="bi bi-person-check me-1"></i>
+                  {% if note.participant %}
+                    Personalized for: <strong>{{ note.participant.get_full_name|default:note.participant.username }}</strong>
+                  {% else %}
+                    Shared with: <strong>All Enrolled Participants</strong>
+                  {% endif %}
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="empty-state py-5">
+            <i class="bi bi-chat-left-dots text-muted fs-2"></i>
+            <h6>No notes published yet for this program</h6>
+            <p class="small text-muted">Use the form on the left to submit recommendations or milestones.</p>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

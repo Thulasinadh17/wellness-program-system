@@ -1,0 +1,352 @@
+{% extends 'base.html' %}
+
+{% block title %}HR & Executive Analytics - Wellness Hub{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <!-- Header -->
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+    <div>
+      <h2 class="fw-bold mb-1"><i class="bi bi-graph-up-arrow text-warning me-2"></i>HR & Executive Wellness Intelligence</h2>
+      <p class="text-muted small mb-0">High-level population health outcomes, participation analytics, and aggregate wellness trends.</p>
+    </div>
+    <div>
+      <span class="badge bg-warning text-dark p-2 border border-warning">
+        <i class="bi bi-shield-lock-fill me-1"></i> Privacy Protected: Aggregate Data Only
+      </span>
+    </div>
+  </div>
+
+  <!-- Privacy Assurance Banner -->
+  <div class="alert alert-info py-2 px-3 small d-flex align-items-center mb-4">
+    <i class="bi bi-shield-check fs-5 me-2 text-primary"></i>
+    <div>
+      <strong>Privacy Guard Active:</strong> In accordance with corporate health privacy compliance, individual medical entries, personal daily notes, and private biometric logs are strictly hidden from HR and management views. All charts display aggregate population metrics.
+    </div>
+  </div>
+
+  <!-- KPI Top Cards -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-lg-3">
+      <div class="card-wellness p-3 h-100">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <div class="text-muted small fw-semibold">Total Participants</div>
+            <div class="fs-3 fw-bold text-teal" style="color: var(--primary-teal);">{{ total_participants }}</div>
+          </div>
+          <div class="stat-icon-box bg-teal-subtle text-teal" style="background-color: var(--primary-pale); color: var(--primary-teal);">
+            <i class="bi bi-people-fill"></i>
+          </div>
+        </div>
+        <div class="small text-muted mt-2">Active employee accounts</div>
+      </div>
+    </div>
+
+    <div class="col-6 col-lg-3">
+      <div class="card-wellness p-3 h-100">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <div class="text-muted small fw-semibold">Total Enrollments</div>
+            <div class="fs-3 fw-bold text-primary">{{ total_enrollments }}</div>
+          </div>
+          <div class="stat-icon-box bg-primary-subtle text-primary">
+            <i class="bi bi-check2-all"></i>
+          </div>
+        </div>
+        <div class="small text-muted mt-2">Registrations across cohorts</div>
+      </div>
+    </div>
+
+    <div class="col-6 col-lg-3">
+      <div class="card-wellness p-3 h-100">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <div class="text-muted small fw-semibold">Active Programs</div>
+            <div class="fs-3 fw-bold text-success">{{ active_programs }}</div>
+          </div>
+          <div class="stat-icon-box bg-success-subtle text-success">
+            <i class="bi bi-lightning-charge"></i>
+          </div>
+        </div>
+        <div class="small text-muted mt-2">Out of {{ total_programs }} total programs</div>
+      </div>
+    </div>
+
+    <div class="col-6 col-lg-3">
+      <div class="card-wellness p-3 h-100">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <div class="text-muted small fw-semibold">Avg. Satisfaction</div>
+            <div class="fs-3 fw-bold text-warning">{{ avg_satisfaction }} / 5.0</div>
+          </div>
+          <div class="stat-icon-box bg-warning-subtle text-warning">
+            <i class="bi bi-star-fill"></i>
+          </div>
+        </div>
+        <div class="small text-muted mt-2">Based on participant reviews</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts Row 1: Enrollments & Participation Rates -->
+  <div class="row g-4 mb-4">
+    <!-- Chart 1: Enrollments per Program -->
+    <div class="col-lg-6">
+      <div class="card-wellness p-4 h-100">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h5 class="fw-bold mb-0"><i class="bi bi-bar-chart-fill text-teal me-2"></i>Enrollments per Program</h5>
+          <span class="badge bg-light text-muted border">Cohort Capacity Fill</span>
+        </div>
+        <div style="position: relative; height: 260px;">
+          <canvas id="enrollmentsChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Chart 2: Participation Rate per Program -->
+    <div class="col-lg-6">
+      <div class="card-wellness p-4 h-100">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h5 class="fw-bold mb-0"><i class="bi bi-percent text-success me-2"></i>Program Participation Rates</h5>
+          <span class="badge bg-success-subtle text-success border border-success-subtle">&ge; 75% Target</span>
+        </div>
+        <div style="position: relative; height: 260px;">
+          <canvas id="participationChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts Row 2: Aggregate Activity Trends & Feedback Ratings -->
+  <div class="row g-4 mb-4">
+    <!-- Chart 3: Aggregate Activity Trends (14 Days) -->
+    <div class="col-lg-7">
+      <div class="card-wellness p-4 h-100">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <div>
+            <h5 class="fw-bold mb-0"><i class="bi bi-activity text-primary me-2"></i>Organization Activity Trends (14 Days)</h5>
+            <small class="text-muted">Mean daily steps & mean workout minutes across all employees</small>
+          </div>
+          <span class="badge bg-light text-muted border">Aggregate Population</span>
+        </div>
+        <div style="position: relative; height: 260px;">
+          <canvas id="activityTrendsChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Chart 4: Average Feedback Rating per Program -->
+    <div class="col-lg-5">
+      <div class="card-wellness p-4 h-100">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h5 class="fw-bold mb-0"><i class="bi bi-stars text-warning me-2"></i>Satisfaction per Program</h5>
+          <span class="badge bg-warning-subtle text-dark border border-warning-subtle">1 to 5 Stars</span>
+        </div>
+        <div style="position: relative; height: 260px;">
+          <canvas id="ratingsChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Department Engagement & Programs Summary Table -->
+  <div class="row g-4">
+    <!-- Department Engagement Breakdown -->
+    <div class="col-lg-4">
+      <div class="card-wellness p-4 h-100">
+        <h5 class="fw-bold mb-3"><i class="bi bi-building text-teal me-2"></i>Department Participation</h5>
+        {% if departments %}
+          <div class="list-group list-group-flush">
+            {% for dept in departments %}
+              <div class="list-group-item px-0 py-2 border-bottom d-flex justify-content-between align-items-center">
+                <span class="fw-semibold small">{{ dept.department }}</span>
+                <span class="badge bg-light text-dark border">{{ dept.participant_count }} participants</span>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="text-muted small">No department data recorded yet.</p>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Programs Summary Table -->
+    <div class="col-lg-8">
+      <div class="card-wellness p-4 h-100">
+        <h5 class="fw-bold mb-3"><i class="bi bi-table text-teal me-2"></i>Program Portfolio Health</h5>
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0 small">
+            <thead class="table-light">
+              <tr class="text-muted">
+                <th>Program</th>
+                <th>Category</th>
+                <th>Status</th>
+                <th>Capacity</th>
+                <th>Participation</th>
+                <th>Satisfaction</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for p in program_summaries %}
+                <tr>
+                  <td class="fw-semibold">{{ p.title }}</td>
+                  <td>{{ p.category }}</td>
+                  <td><span class="badge bg-light text-dark border">{{ p.status }}</span></td>
+                  <td>{{ p.enrolled }} / {{ p.capacity }}</td>
+                  <td class="fw-bold {% if p.participation_rate >= 75 %}text-success{% endif %}">{{ p.participation_rate }}%</td>
+                  <td>
+                    {% if p.avg_rating != 'N/A' %}
+                      <span class="text-warning">★</span> {{ p.avg_rating }}
+                    {% else %}
+                      <span class="text-muted">N/A</span>
+                    {% endif %}
+                  </td>
+                </tr>
+              {% empty %}
+                <tr><td colspan="6" class="text-muted">No programs registered.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  const progTitles = {{ prog_titles_json|safe }};
+  const progEnrollments = {{ prog_enrollments_json|safe }};
+  const progRates = {{ prog_rates_json|safe }};
+  const progRatings = {{ prog_ratings_json|safe }};
+
+  // 1. Enrollments Chart
+  const enrollCtx = document.getElementById('enrollmentsChart');
+  if (enrollCtx) {
+    new Chart(enrollCtx, {
+      type: 'bar',
+      data: {
+        labels: progTitles,
+        datasets: [{
+          label: 'Enrolled Count',
+          data: progEnrollments,
+          backgroundColor: '#0f766e',
+          borderRadius: 6
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true } }
+      }
+    });
+  }
+
+  // 2. Participation Rate Chart
+  const partCtx = document.getElementById('participationChart');
+  if (partCtx) {
+    new Chart(partCtx, {
+      type: 'bar',
+      data: {
+        labels: progTitles,
+        datasets: [{
+          label: 'Participation %',
+          data: progRates,
+          backgroundColor: progRates.map(r => r >= 75 ? '#10b981' : '#0d9488'),
+          borderRadius: 6
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: {
+            beginAtZero: true,
+            max: 100,
+            ticks: { callback: v => v + '%' }
+          }
+        }
+      }
+    });
+  }
+
+  // 3. Aggregate Activity Trends Chart
+  const actCtx = document.getElementById('activityTrendsChart');
+  if (actCtx) {
+    new Chart(actCtx, {
+      type: 'line',
+      data: {
+        labels: {{ trend_dates_json|safe }},
+        datasets: [
+          {
+            label: 'Avg Steps',
+            data: {{ avg_steps_trend_json|safe }},
+            borderColor: '#0f766e',
+            backgroundColor: 'rgba(15, 118, 110, 0.1)',
+            tension: 0.3,
+            fill: true,
+            yAxisID: 'y'
+          },
+          {
+            label: 'Avg Workout Mins',
+            data: {{ avg_workout_trend_json|safe }},
+            borderColor: '#f59e0b',
+            tension: 0.3,
+            fill: false,
+            yAxisID: 'y1'
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: {
+            type: 'linear',
+            position: 'left',
+            title: { display: true, text: 'Steps' }
+          },
+          y1: {
+            type: 'linear',
+            position: 'right',
+            grid: { drawOnChartArea: false },
+            title: { display: true, text: 'Workout (mins)' }
+          }
+        }
+      }
+    });
+  }
+
+  // 4. Feedback Ratings Chart
+  const ratCtx = document.getElementById('ratingsChart');
+  if (ratCtx) {
+    new Chart(ratCtx, {
+      type: 'bar',
+      data: {
+        labels: progTitles,
+        datasets: [{
+          label: 'Avg Rating',
+          data: progRatings,
+          backgroundColor: '#f59e0b',
+          borderRadius: 6
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: {
+            beginAtZero: true,
+            max: 5,
+            ticks: { stepSize: 1 }
+          }
+        }
+      }
+    });
+  }
+</script>
+{% endblock %}

@@ -1,0 +1,326 @@
+{% extends 'base.html' %}
+
+{% block title %}Participant Dashboard - Wellness Hub{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <!-- Participant Header -->
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+    <div>
+      <h2 class="fw-bold mb-1">Hello, {{ user.first_name|default:user.username }}! 👋</h2>
+      <p class="text-muted small mb-0">Track your daily wellness habits, program attendance, and reward eligibility.</p>
+    </div>
+    <div class="d-flex flex-wrap gap-2">
+      <a href="{% url 'activity_log' %}" class="btn btn-teal">
+        <i class="bi bi-plus-circle me-1"></i> Log Today's Activity
+      </a>
+      <a href="{% url 'program_browse' %}" class="btn btn-outline-teal text-teal border-teal">
+        <i class="bi bi-search me-1"></i> Explore Programs
+      </a>
+    </div>
+  </div>
+
+  <!-- Key Metric Summary Cards -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-lg-3">
+      <div class="card-wellness p-3 h-100">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <div class="text-muted small fw-semibold">Reward Points</div>
+            <div class="fs-3 fw-bold text-warning">{{ user.points }} pts</div>
+          </div>
+          <div class="stat-icon-box bg-warning-subtle text-warning">
+            <i class="bi bi-star-fill"></i>
+          </div>
+        </div>
+        <div class="small text-muted mt-2">Earned from activities & goals</div>
+      </div>
+    </div>
+
+    <div class="col-6 col-lg-3">
+      <div class="card-wellness p-3 h-100">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <div class="text-muted small fw-semibold">Active Programs</div>
+            <div class="fs-3 fw-bold text-teal" style="color: var(--primary-teal);">{{ enrollments.count }}</div>
+          </div>
+          <div class="stat-icon-box bg-teal-subtle text-teal" style="background-color: var(--primary-pale); color: var(--primary-teal);">
+            <i class="bi bi-calendar2-heart"></i>
+          </div>
+        </div>
+        <div class="small text-muted mt-2">Currently enrolled cohorts</div>
+      </div>
+    </div>
+
+    <div class="col-6 col-lg-3">
+      <div class="card-wellness p-3 h-100">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <div class="text-muted small fw-semibold">Avg. Attendance</div>
+            <div class="fs-3 fw-bold text-primary">{{ overall_participation }}%</div>
+          </div>
+          <div class="stat-icon-box bg-primary-subtle text-primary">
+            <i class="bi bi-check2-circle"></i>
+          </div>
+        </div>
+        <div class="small text-muted mt-2">Threshold for reward is &ge; 75%</div>
+      </div>
+    </div>
+
+    <div class="col-6 col-lg-3">
+      <div class="card-wellness p-3 h-100">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <div class="text-muted small fw-semibold">Reward Eligible</div>
+            <div class="fs-3 fw-bold text-success">{{ reward_eligible_count }}</div>
+          </div>
+          <div class="stat-icon-box bg-success-subtle text-success">
+            <i class="bi bi-award-fill"></i>
+          </div>
+        </div>
+        <div class="small text-muted mt-2">Programs meeting &ge; 75% rate</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Interactive Charts Section -->
+  <div class="row g-4 mb-4">
+    <!-- Chart 1: 7-Day Activity Trends -->
+    <div class="col-lg-7">
+      <div class="card-wellness p-4 h-100">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h5 class="fw-bold mb-0"><i class="bi bi-activity text-teal me-2"></i>7-Day Daily Movement Trends</h5>
+          <span class="badge bg-light text-muted border">Daily Steps & Workout</span>
+        </div>
+        <div style="position: relative; height: 260px;">
+          <canvas id="activityTrendChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Chart 2: Program Participation & 75% Threshold -->
+    <div class="col-lg-5">
+      <div class="card-wellness p-4 h-100">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h5 class="fw-bold mb-0"><i class="bi bi-bar-chart-line text-success me-2"></i>Program Attendance %</h5>
+          <span class="badge bg-success-subtle text-success border border-success-subtle">&ge; 75% Reward Goal</span>
+        </div>
+        <div style="position: relative; height: 260px;">
+          <canvas id="programRateChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Content Row: Enrolled Programs & Upcoming Sessions -->
+  <div class="row g-4">
+    <!-- Enrolled Programs Status -->
+    <div class="col-lg-8">
+      <div class="card-wellness p-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h5 class="fw-bold mb-0"><i class="bi bi-journal-check text-teal me-2"></i>My Enrolled Programs</h5>
+          <a href="{% url 'program_browse' %}" class="btn btn-sm btn-outline-secondary">Explore More</a>
+        </div>
+
+        {% if enrollments %}
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+              <thead class="table-light">
+                <tr class="small text-muted">
+                  <th>Program Title</th>
+                  <th>Category</th>
+                  <th>Attendance</th>
+                  <th>Status & Reward</th>
+                  <th class="text-end">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for enr in enrollments %}
+                  <tr>
+                    <td>
+                      <a href="{% url 'program_detail' enr.program.id %}" class="fw-bold text-dark text-decoration-none">
+                        {{ enr.program.title }}
+                      </a>
+                      <div class="small text-muted">{{ enr.program.start_date|date:"M d" }} - {{ enr.program.end_date|date:"M d, Y" }}</div>
+                    </td>
+                    <td>
+                      <span class="badge bg-light text-dark border">
+                        <i class="bi {{ enr.program.category.icon }} me-1 text-teal"></i> {{ enr.program.category.name }}
+                      </span>
+                    </td>
+                    <td>
+                      <div class="fw-semibold">{{ enr.participation_rate }}%</div>
+                      <div class="small text-muted">{{ enr.attended_sessions_count }}/{{ enr.conducted_sessions_count }} conducted</div>
+                    </td>
+                    <td>
+                      {% if enr.is_eligible_for_reward %}
+                        <span class="badge badge-reward-eligible">
+                          <i class="bi bi-trophy-fill me-1"></i> Eligible for Reward
+                        </span>
+                      {% else %}
+                        <span class="badge bg-secondary">In Progress</span>
+                      {% endif %}
+                    </td>
+                    <td class="text-end">
+                      <a href="{% url 'program_detail' enr.program.id %}" class="btn btn-sm btn-outline-teal text-teal border-teal">
+                        View
+                      </a>
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <div class="empty-state">
+            <i class="bi bi-calendar2-plus"></i>
+            <h6>You are not currently enrolled in any programs</h6>
+            <p class="small">Explore our wellness cohorts and sign up today!</p>
+            <a href="{% url 'program_browse' %}" class="btn btn-teal btn-sm">Browse Programs</a>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Upcoming Sessions & Goals -->
+    <div class="col-lg-4">
+      <!-- Upcoming Sessions -->
+      <div class="card-wellness p-4 mb-4">
+        <h5 class="fw-bold mb-3"><i class="bi bi-clock-history text-teal me-2"></i>Upcoming Sessions</h5>
+        {% if upcoming_sessions %}
+          <div class="list-group list-group-flush">
+            {% for sess in upcoming_sessions %}
+              <div class="list-group-item px-0 py-2 border-bottom">
+                <div class="d-flex justify-content-between align-items-start">
+                  <div>
+                    <div class="fw-semibold small">{{ sess.title }}</div>
+                    <div class="text-muted small">{{ sess.program.title|truncatewords:4 }}</div>
+                    <div class="small text-teal"><i class="bi bi-geo-alt me-1"></i> {{ sess.location }}</div>
+                  </div>
+                  <div class="badge bg-light text-dark border text-end">
+                    <div>{{ sess.session_date|date:"M d" }}</div>
+                    <div class="small text-muted">{{ sess.start_time|time:"H:i" }}</div>
+                  </div>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="text-muted small mb-0">No upcoming sessions scheduled for your enrolled programs.</p>
+        {% endif %}
+      </div>
+
+      <!-- Active Goals Snapshot -->
+      <div class="card-wellness p-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h5 class="fw-bold mb-0"><i class="bi bi-flag-fill text-warning me-2"></i>My Goals</h5>
+          <a href="{% url 'goals_list' %}" class="small text-teal text-decoration-none">View All</a>
+        </div>
+        {% if active_goals %}
+          <ul class="list-unstyled mb-0">
+            {% for goal in active_goals %}
+              <li class="mb-2 pb-2 border-bottom">
+                <div class="d-flex justify-content-between align-items-center">
+                  <span class="small fw-semibold">{{ goal.title }}</span>
+                  <span class="badge bg-light text-dark border">{{ goal.target_value }} {{ goal.unit }}</span>
+                </div>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p class="text-muted small mb-0">No active goals yet. <a href="{% url 'goals_list' %}">Set a goal</a> to earn bonus points!</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // 1. Activity Trend Chart
+  const trendCtx = document.getElementById('activityTrendChart');
+  if (trendCtx) {
+    new Chart(trendCtx, {
+      type: 'line',
+      data: {
+        labels: {{ chart_labels|safe }},
+        datasets: [
+          {
+            label: 'Steps',
+            data: {{ steps_data|safe }},
+            borderColor: '#0f766e',
+            backgroundColor: 'rgba(15, 118, 110, 0.1)',
+            tension: 0.3,
+            fill: true,
+            yAxisID: 'y'
+          },
+          {
+            label: 'Workout (mins)',
+            data: {{ workout_data|safe }},
+            borderColor: '#f59e0b',
+            backgroundColor: 'rgba(245, 158, 11, 0.1)',
+            tension: 0.3,
+            fill: false,
+            yAxisID: 'y1'
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: {
+            type: 'linear',
+            display: true,
+            position: 'left',
+            title: { display: true, text: 'Steps' }
+          },
+          y1: {
+            type: 'linear',
+            display: true,
+            position: 'right',
+            grid: { drawOnChartArea: false },
+            title: { display: true, text: 'Mins' }
+          }
+        }
+      }
+    });
+  }
+
+  // 2. Program Attendance Rate Chart
+  const rateCtx = document.getElementById('programRateChart');
+  if (rateCtx) {
+    const programLabels = {{ program_chart_labels|safe }};
+    const programRates = {{ program_chart_rates|safe }};
+    new Chart(rateCtx, {
+      type: 'bar',
+      data: {
+        labels: programLabels.length ? programLabels : ['No Programs'],
+        datasets: [{
+          label: 'Participation %',
+          data: programRates.length ? programRates : [0],
+          backgroundColor: programRates.map(r => r >= 75 ? '#10b981' : '#0d9488'),
+          borderRadius: 6
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: {
+            beginAtZero: true,
+            max: 100,
+            ticks: {
+              callback: function(value) { return value + "%"; }
+            }
+          }
+        },
+        plugins: {
+          legend: { display: false }
+        }
+      }
+    });
+  }
+</script>
+{% endblock %}

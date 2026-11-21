@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+
+{% block title %}Sign In - Wellness Hub{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-md-7 col-lg-5">
+      <div class="card-wellness p-4 p-sm-5 shadow-sm">
+        <div class="text-center mb-4">
+          <div class="stat-icon-box bg-light text-teal mx-auto mb-2" style="color: var(--primary-teal);">
+            <i class="bi bi-heart-pulse-fill"></i>
+          </div>
+          <h3 class="fw-bold mb-1">Welcome Back</h3>
+          <p class="text-muted small">Sign in to access your wellness workspace</p>
+        </div>
+
+        <form method="post" action="{% url 'login' %}" id="loginForm">
+          {% csrf_token %}
+          
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Username</label>
+            <div class="input-group">
+              <span class="input-group-text bg-light"><i class="bi bi-person"></i></span>
+              <input type="text" name="username" class="form-control" placeholder="Enter your username" required autofocus id="id_username">
+            </div>
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label small fw-semibold">Password</label>
+            <div class="input-group">
+              <span class="input-group-text bg-light"><i class="bi bi-lock"></i></span>
+              <input type="password" name="password" class="form-control" placeholder="Enter your password" required id="id_password">
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-teal w-100 py-2 fw-semibold mb-3">
+            <i class="bi bi-box-arrow-in-right me-1"></i> Sign In
+          </button>
+        </form>
+
+        <div class="text-center small text-muted mb-4">
+          Are you a participant without an account? 
+          <a href="{% url 'register' %}" class="text-teal fw-semibold">Register here</a>
+        </div>
+
+        <!-- 1-Click Quick Demo Login Selector -->
+        <div class="p-3 bg-light rounded-3 border">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <span class="small fw-bold text-dark"><i class="bi bi-lightning-charge-fill text-warning me-1"></i> Quick 1-Click Demo Logins</span>
+            <span class="badge bg-secondary">Demo@1234</span>
+          </div>
+          <div class="d-grid gap-1">
+            <button type="button" class="btn btn-sm btn-outline-primary text-start demo-login-btn d-flex justify-content-between align-items-center" data-user="user_demo">
+              <span><i class="bi bi-person me-2"></i><strong>user_demo</strong> (Participant)</span>
+              <span class="badge bg-primary text-white">Participant</span>
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-success text-start demo-login-btn d-flex justify-content-between align-items-center" data-user="coord_demo">
+              <span><i class="bi bi-kanban me-2"></i><strong>coord_demo</strong> (Coordinator)</span>
+              <span class="badge bg-success text-white">Coordinator</span>
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-info text-start demo-login-btn d-flex justify-content-between align-items-center" data-user="pro_demo">
+              <span><i class="bi bi-person-workspace me-2"></i><strong>pro_demo</strong> (Professional)</span>
+              <span class="badge bg-info text-dark">Professional</span>
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-warning text-dark text-start demo-login-btn d-flex justify-content-between align-items-center" data-user="hr_demo">
+              <span><i class="bi bi-graph-up-arrow me-2"></i><strong>hr_demo</strong> (HR / Management)</span>
+              <span class="badge bg-warning text-dark">HR</span>
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-danger text-start demo-login-btn d-flex justify-content-between align-items-center" data-user="admin_demo">
+              <span><i class="bi bi-shield-lock me-2"></i><strong>admin_demo</strong> (Administrator)</span>
+              <span class="badge bg-danger text-white">Admin</span>
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // Check URL query parameters for ?role=...
+  const urlParams = new URLSearchParams(window.location.search);
+  const targetRole = urlParams.get('role');
+  if (targetRole) {
+    const userField = document.getElementById('id_username');
+    const passField = document.getElementById('id_password');
+    if (userField && passField) {
+      userField.value = targetRole;
+      passField.value = 'Demo@1234';
+      document.getElementById('loginForm').submit();
+    }
+  }
+</script>
+{% endblock %}
